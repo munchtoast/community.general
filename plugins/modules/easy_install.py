@@ -12,7 +12,7 @@ short_description: Installs Python libraries
 description:
   - Installs Python libraries, optionally in a C(virtualenv).
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -139,6 +139,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     name = module.params["name"]
     env = module.params["virtualenv"]

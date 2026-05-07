@@ -16,7 +16,7 @@ description:
   - Composer is a tool for dependency management in PHP. It allows you to declare the dependent libraries your project needs
     and it installs them in your project for you.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -227,6 +227,7 @@ def main():
         required_if=[("global_command", False, ["working_dir"])],
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     # Get composer command with fallback to default
     command = module.params["command"]

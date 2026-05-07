@@ -13,8 +13,8 @@ description:
   - Retrieve information about all installed images on SmartOS.
 author: Adam Števko (@xen0l)
 extends_documentation_fragment:
-  - community.general.attributes
-  - community.general.attributes.info_module
+  - community.general._attributes
+  - community.general._attributes.info_module
 attributes:
   check_mode:
     version_added: 3.3.0
@@ -109,6 +109,7 @@ def main():
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     image_facts = ImageFacts(module)
 

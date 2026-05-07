@@ -30,23 +30,15 @@
       loop: "{{ test_packages }}"
       when: ansible_facts.distribution != "MacOSX"
 
-    - name: Install a gem
-      gem:
-        name: gist
-        state: present
-      register: install_gem_result
-      ignore_errors: true
+    # default user_install: skip on RedHat/Fedora where OS-injected --install-dir conflicts
+    - when: ansible_facts.os_family != "RedHat"
+      block:
+        - name: Install a gem (default user_install)
+          gem:
+            name: gist
+            state: present
+          register: install_gem_result
 
-    # when running as root on Fedora, '--install-dir' is set in the os defaults which is
-    # incompatible with '--user-install', we ignore this error for this case only
-    - name: fail if failed to install gem
-      fail:
-        msg: "failed to install gem: {{ install_gem_result.msg }}"
-      when:
-        - install_gem_result is failed
-        - not (ansible_facts.user_uid == 0 and "User --install-dir or --user-install but not both" not in install_gem_result.msg)
-
-    - block:
         - name: List gems
           command: gem list
           register: current_gems
@@ -72,7 +64,6 @@
             that:
               - remove_gem_results is changed
               - current_gems.stdout is not search('gist\s+\([0-9.]+\)')
-      when: not install_gem_result is failed
 
     # install gem in --no-user-install
     - block:
@@ -97,6 +88,7 @@
           gem:
             name: gist
             state: absent
+            user_install: false
           register: remove_gem_results
 
         - name: List gems
@@ -179,7 +171,7 @@
         state: present
         bindir: "{{ remote_tmp_dir }}/custom_bindir"
         norc: true
-        user_install: false  # Avoid conflicts between --install-dir and --user-install when running as root on CentOS / Fedora / RHEL
+        user_install: false
       register: install_gem_result
 
     - name: Get stats of gem executable
@@ -199,7 +191,7 @@
         state: absent
         bindir: "{{ remote_tmp_dir }}/custom_bindir"
         norc: true
-        user_install: false  # Avoid conflicts between --install-dir and --user-install when running as root on CentOS / Fedora / RHEL
+        user_install: false
       register: install_gem_result
 
     - name: Get stats of gem executable
@@ -212,6 +204,53 @@
         that:
           - install_gem_result is changed
           - not gem_bindir_stat.stat.exists
+
+    # override_platform_install_dir: install and remove using explicit user gem dir
+    - name: Install a gem with override_platform_install_dir
+      gem:
+        name: gist
+        state: present
+        override_platform_install_dir: true
+      register: install_gem_result
+
+    - name: List gems
+      command: gem list
+      register: current_gems
+
+    - name: Ensure gem was installed with override_platform_install_dir
+      assert:
+        that:
+          - install_gem_result is changed
+          - current_gems.stdout is search('gist\s+\([0-9.]+\)')
+
+    - name: Install a gem with override_platform_install_dir (idempotency)
+      gem:
+        name: gist
+        state: present
+        override_platform_install_dir: true
+      register: install_gem_result
+
+    - name: Ensure install is idempotent
+      assert:
+        that:
+          - install_gem_result is not changed
+
+    - name: Remove a gem with override_platform_install_dir
+      gem:
+        name: gist
+        state: absent
+        override_platform_install_dir: true
+      register: remove_gem_result
+
+    - name: List gems
+      command: gem list
+      register: current_gems
+
+    - name: Verify gem was removed with override_platform_install_dir
+      assert:
+        that:
+          - remove_gem_result is changed
+          - current_gems.stdout is not search('gist\s+\([0-9.]+\)')
 
     - name: Attempt to uninstall default gem 'json'
       community.general.gem:

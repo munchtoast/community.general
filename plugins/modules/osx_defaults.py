@@ -20,7 +20,7 @@ description:
     be maintained when the applications are not running (such as default font for new documents, or the position of an Info
     panel).
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -498,6 +498,7 @@ def main():
         supports_check_mode=True,
         required_if=(("state", "present", ["value"]),),
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     try:
         defaults = OSXDefaults(module=module)

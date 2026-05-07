@@ -15,7 +15,7 @@ short_description: Deploy software (or files) from bzr branches
 description:
   - Manage C(bzr) branches to deploy files or software.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -147,6 +147,7 @@ def main():
             executable=dict(type="str"),
         )
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     dest = module.params["dest"]
     parent = module.params["name"]

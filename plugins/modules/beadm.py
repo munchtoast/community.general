@@ -14,7 +14,7 @@ description:
   - Mount and unmount ZFS boot environments.
 author: Adam Števko (@xen0l)
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -288,6 +288,7 @@ def main():
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     be = BE(module)
 

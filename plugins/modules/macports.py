@@ -16,7 +16,7 @@ short_description: Package manager for MacPorts
 description:
   - Manages MacPorts packages (ports).
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -271,6 +271,7 @@ def main():
             variant=dict(aliases=["variants"], type="str"),
         )
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     stdout = ""
     stderr = ""

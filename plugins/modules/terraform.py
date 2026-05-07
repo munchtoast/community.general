@@ -11,7 +11,7 @@ short_description: Manages a Terraform deployment (and plans)
 description:
   - Provides support for deploying resources with Terraform and pulling resource information back into Ansible.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -284,7 +284,7 @@ from shlex import quote as shlex_quote
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.community.general.plugins.module_utils.version import LooseVersion
+from ansible_collections.community.general.plugins.module_utils._version import LooseVersion
 
 module = None
 
@@ -528,6 +528,8 @@ def main():
         supports_check_mode=True,
     )
 
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
+
     project_path = module.params.get("project_path")
     bin_path = module.params.get("binary_path")
     plugin_paths = module.params.get("plugin_paths")
@@ -603,7 +605,8 @@ def main():
         if vars is None:
             return "null"
         elif isinstance(vars, str):
-            return '"{string}"'.format(string=vars.replace("\\", "\\\\").replace('"', '\\"')).replace("\n", "\\n")
+            escaped = vars.replace("\\", "\\\\").replace('"', '\\"')
+            return f'"{escaped}"'.replace("\n", "\\n")
         elif isinstance(vars, bool):
             if vars:
                 return "true"

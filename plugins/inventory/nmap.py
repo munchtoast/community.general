@@ -11,8 +11,8 @@ short_description: Uses nmap to find hosts to target
 description:
   - Uses a YAML configuration file with a valid YAML extension.
 extends_documentation_fragment:
-  - constructed
-  - inventory_cache
+  - ansible.builtin.constructed
+  - ansible.builtin.inventory_cache
 requirements:
   - nmap CLI installed
 options:
@@ -95,6 +95,14 @@ options:
     type: boolean
     default: true
     version_added: 7.4.0
+  set_name_variable:
+    description:
+      - Set the C(name) variable for each host.
+      - When V(true), sets the C(name) variable which may trigger a warning about using a reserved name.
+      - Set to V(false) to avoid the warning when C(name) is not needed as a variable.
+    type: boolean
+    default: true
+    version_added: 13.0.0
 notes:
   - At least one of O(ipv4) or O(ipv6) is required to be V(true); both can be V(true), but they cannot both be V(false).
   - 'TODO: add OS fingerprinting.'
@@ -121,6 +129,12 @@ exclude: 192.168.0.1, web.example.com
 port: 22, 443
 groups:
   web_servers: "ports | selectattr('port', 'equalto', '443')"
+
+---
+# an nmap scan without setting the 'name' variable to avoid warnings
+plugin: community.general.nmap
+address: 192.168.0.0/24
+set_name_variable: false
 """
 
 import os
@@ -133,7 +147,7 @@ from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
 
-from ansible_collections.community.general.plugins.plugin_utils.unsafe import make_unsafe
+from ansible_collections.community.general.plugins.plugin_utils._unsafe import make_unsafe
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
@@ -148,12 +162,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _populate(self, hosts):
         # Use constructed if applicable
         strict = self.get_option("strict")
+        set_name_variable = self.get_option("set_name_variable")
 
         for host in hosts:
             host = make_unsafe(host)
             hostname = host["name"]
             self.inventory.add_host(hostname)
             for var, value in host.items():
+                if var == "name" and not set_name_variable:
+                    continue
                 self.inventory.set_variable(hostname, var, value)
 
             # Composed variables

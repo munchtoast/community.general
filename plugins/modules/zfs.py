@@ -13,7 +13,7 @@ short_description: Manage ZFS
 description:
   - Manages ZFS file systems, volumes, clones and snapshots.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: partial
@@ -254,6 +254,7 @@ def main():
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     state = module.params.get("state")
     name = module.params.get("name")

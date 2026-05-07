@@ -16,7 +16,7 @@ version_added: '0.2.0'
 description:
   - Manage Local Backup Utility of Alpine Linux in run-from-RAM mode.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 
 attributes:
   check_mode:
@@ -86,6 +86,7 @@ def run_module():
         },
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     changed = False
 

@@ -14,7 +14,7 @@ short_description: Manage runit services
 description:
   - Controls runit services on remote hosts using the sv utility.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -225,7 +225,7 @@ def main():
         supports_check_mode=True,
     )
 
-    module.run_command_environ_update = dict(LANG="C", LC_ALL="C", LC_MESSAGES="C", LC_CTYPE="C")
+    module.run_command_environ_update = dict(LANGUAGE="C", LC_ALL="C")
 
     state = module.params["state"]
     enabled = module.params["enabled"]

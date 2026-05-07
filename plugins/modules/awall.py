@@ -15,7 +15,7 @@ description:
   - Alpine Wall (C(awall)) generates a firewall configuration from the enabled policy files and activates the configuration
     on the system.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -135,6 +135,7 @@ def main():
         required_one_of=[["name", "activate"]],
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     global AWALL_PATH
     AWALL_PATH = module.get_bin_path("awall", required=True)

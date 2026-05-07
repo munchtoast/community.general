@@ -17,8 +17,8 @@ short_description: Read git configuration
 description:
   - The M(community.general.git_config_info) module reads the git configuration by invoking C(git config).
 extends_documentation_fragment:
-  - community.general.attributes
-  - community.general.attributes.info_module
+  - community.general._attributes
+  - community.general._attributes.info_module
 options:
   name:
     description:
@@ -122,7 +122,7 @@ def main():
 
     # We check error message for a pattern, so we need to make sure the messages appear in the form we're expecting.
     # Set the locale to C to ensure consistent messages.
-    module.run_command_environ_update = dict(LANG="C", LC_ALL="C", LC_MESSAGES="C", LC_CTYPE="C")
+    module.run_command_environ_update = dict(LANGUAGE="C", LC_ALL="C")
 
     name = module.params["name"]
     path = module.params["path"]

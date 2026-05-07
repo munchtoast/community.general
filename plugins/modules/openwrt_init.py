@@ -13,7 +13,7 @@ short_description: Manage services on OpenWrt
 description:
   - Controls OpenWrt services on remote hosts.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -103,6 +103,7 @@ def main():
         supports_check_mode=True,
         required_one_of=[("state", "enabled")],
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     # initialize
     service = module.params["name"]

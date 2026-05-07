@@ -16,7 +16,7 @@ version_added: '2.0.0'
 description:
   - Manages C(/etc/rc.conf) for FreeBSD.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -96,7 +96,7 @@ EXAMPLES = r"""
 import os
 import re
 
-from ansible_collections.community.general.plugins.module_utils.module_helper import StateModuleHelper
+from ansible_collections.community.general.plugins.module_utils._module_helper import StateModuleHelper
 
 
 class Sysrc(StateModuleHelper):
@@ -119,6 +119,7 @@ class Sysrc(StateModuleHelper):
         if not re.match(r"^\w+$", self.vars.name, re.ASCII):
             self.module.fail_json(msg="Name may only contain alpha-numeric and underscore characters")
 
+        self.module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
         self.sysrc = self.module.get_bin_path("sysrc", True)
 
     def _contains(self):

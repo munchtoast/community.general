@@ -12,7 +12,7 @@ short_description: Manage system objects in Cobbler
 description:
   - Add, modify or remove systems in Cobbler.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -152,7 +152,7 @@ import xmlrpc.client as xmlrpc_client
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.community.general.plugins.module_utils.datetime import (
+from ansible_collections.community.general.plugins.module_utils._datetime import (
     now,
 )
 
@@ -220,9 +220,9 @@ def main():
     name = module.params["name"]
     state = module.params["state"]
 
-    module.params["proto"] = "https" if use_ssl else "http"
+    proto = "https" if use_ssl else "http"
     if not port:
-        module.params["port"] = "443" if use_ssl else "80"
+        port = "443" if use_ssl else "80"
 
     result = dict(
         changed=False,
@@ -232,17 +232,13 @@ def main():
 
     ssl_context = None if validate_certs or not use_ssl else ssl._create_unverified_context()
 
-    url = "{proto}://{host}:{port}/cobbler_api".format(**module.params)
+    url = f"{proto}://{module.params['host']}:{port}/cobbler_api"
     conn = xmlrpc_client.ServerProxy(url, context=ssl_context)
 
     try:
         token = conn.login(username, password)
     except xmlrpc_client.Fault as e:
-        module.fail_json(
-            msg="Failed to log in to Cobbler '{url}' as '{username}'. {error}".format(
-                url=url, error=f"{e}", **module.params
-            )
-        )
+        module.fail_json(msg=f"Failed to log in to Cobbler '{url}' as '{username}'. {e}")
     except Exception as e:
         module.fail_json(msg=f"Connection to '{url}' failed. {e}")
 
@@ -302,7 +298,8 @@ def main():
                         continue
                     if key not in IFPROPS_MAPPING:
                         module.warn(f"Property '{key}' is not a valid system property.")
-                    if not system or system["interfaces"][device][IFPROPS_MAPPING[key]] != value:
+                        continue
+                    if not system or system["interfaces"].get(device, {}).get(IFPROPS_MAPPING[key]) != value:
                         result["changed"] = True
                     interface_properties[f"{key}-{device}"] = value
 

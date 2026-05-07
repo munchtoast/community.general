@@ -15,7 +15,7 @@ description:
   - IPS packages are the native packages in Solaris 11 and higher.
   - This module configures which publishers a client downloads IPS packages from.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -84,6 +84,7 @@ def main():
             mirror=dict(type="list", elements="str"),
         )
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     for option in ["origin", "mirror"]:
         if module.params[option] == [""]:

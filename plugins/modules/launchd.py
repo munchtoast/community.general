@@ -15,7 +15,7 @@ version_added: 1.0.0
 description:
   - Manage launchd services on target macOS hosts.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -466,6 +466,7 @@ def main():
             ["state", "enabled"],
         ],
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     service = module.params["name"]
     plist_filename = module.params["plist"]

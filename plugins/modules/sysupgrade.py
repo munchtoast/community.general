@@ -13,7 +13,7 @@ version_added: 1.1.0
 description:
   - Manage OpenBSD system upgrades using C(sysupgrade).
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -133,6 +133,7 @@ def main():
         ),
         supports_check_mode=False,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
     return_dict = sysupgrade_run(module)
     module.exit_json(**return_dict)
 

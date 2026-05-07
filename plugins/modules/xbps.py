@@ -16,7 +16,7 @@ author:
   - "Dino Occhialini (@dinoocch)"
   - "Michael Aldridge (@the-maldridge)"
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -361,6 +361,7 @@ def main():
         required_one_of=[["name", "update_cache", "upgrade"]],
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     xbps_path = dict()
     xbps_path["install"] = module.get_bin_path("xbps-install", True)

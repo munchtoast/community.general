@@ -13,7 +13,7 @@ description:
   - Similar to the M(community.general.facter_facts) module, this runs the I(Ohai) discovery program (U(https://docs.chef.io/ohai.html))
     on the remote host and returns JSON inventory data. I(Ohai) data is a bit more verbose and nested than I(facter).
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -28,6 +28,8 @@ author:
 """
 
 EXAMPLES = r"""
+# fmt: console
+
 ansible webservers -m ohai --tree=/tmp/ohaidata
 ...
 """
@@ -38,6 +40,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(argument_spec=dict())
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
     cmd = ["/usr/bin/env", "ohai"]
     rc, out, err = module.run_command(cmd, check_rc=True)
     module.exit_json(**json.loads(out))

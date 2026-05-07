@@ -26,7 +26,7 @@ notes:
   - 'Known bug with pkgin < 0.8.0: if a package is removed and another package depends on it, the other package is silently
     removed as well.'
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -353,7 +353,7 @@ def main():
     global PKGIN_PATH
     PKGIN_PATH = module.get_bin_path("pkgin", True, ["/opt/local/bin"])
 
-    module.run_command_environ_update = dict(LANG="C", LC_ALL="C", LC_MESSAGES="C", LC_CTYPE="C")
+    module.run_command_environ_update = dict(LANGUAGE="C", LC_ALL="C")
 
     p = module.params
 

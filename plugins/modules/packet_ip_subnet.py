@@ -24,7 +24,7 @@ author:
   - Nurfet Becirevic (@nurfet-becirevic) <nurfet.becirevic@gmail.com>
 
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 
 attributes:
   check_mode:
@@ -158,7 +158,7 @@ except ImportError:
     HAS_PACKET_SDK = False
 
 
-NAME_RE = r"({0}|{0}{1}*{0})".format(r"[a-zA-Z0-9]", r"[a-zA-Z0-9\-]")
+NAME_RE = r"([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])"
 HOSTNAME_RE = rf"({NAME_RE}\.)*{NAME_RE}$"
 PROJECT_MAX_DEVICES = 100
 

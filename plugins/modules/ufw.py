@@ -26,7 +26,7 @@ notes:
 requirements:
   - C(ufw) package
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -395,7 +395,7 @@ def main():
         cmd = " ".join(map(itemgetter(-1), filter(itemgetter(0), cmd)))
 
         cmds.append(cmd)
-        (rc, out, err) = module.run_command(cmd, environ_update={"LANG": "C"})
+        (rc, out, err) = module.run_command(cmd, environ_update={"LANGUAGE": "C", "LC_ALL": "C"})
 
         if rc != 0 and not ignore_error:
             module.fail_json(msg=err or out, commands=cmds)

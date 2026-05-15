@@ -17,7 +17,7 @@ short_description: Package manager for Gentoo
 description:
   - Manages Gentoo packages.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 
 attributes:
   check_mode:
@@ -587,6 +587,7 @@ def main():
         ],
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     if not HAS_PORTAGE:
         if sys.executable != "/usr/bin/python" and not has_respawned():

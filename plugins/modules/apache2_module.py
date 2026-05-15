@@ -16,7 +16,7 @@ short_description: Enables/disables a module of the Apache2 webserver
 description:
   - Enables or disables a specified module of the Apache2 webserver.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -245,6 +245,7 @@ def main():
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     name = module.params["name"]
     if name == "cgi" and module.params["state"] == "present" and _run_threaded(module):

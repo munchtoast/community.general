@@ -16,7 +16,7 @@ version_added: "4.0.0"
 description:
   - Execute SQL scripts on a MSSQL database.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 
 attributes:
   check_mode:
@@ -377,7 +377,10 @@ def run_module():
     for query in queries:
         # Catch and exit on any bad query errors
         try:
-            cursor.execute(query, sql_params)
+            if sql_params:
+                cursor.execute(query, sql_params)
+            else:
+                cursor.execute(query)
             qry_result = []
             rows = cursor.fetchall()
             while rows:

@@ -29,8 +29,7 @@ description:
   - Also supports transactional updates, by running zypper inside C(/sbin/transactional-update --continue --drop-if-no-change
     --quiet run).
 extends_documentation_fragment:
-  - community.general.attributes
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -624,7 +623,7 @@ def main():
         supports_check_mode=True,
     )
 
-    module.run_command_environ_update = dict(LANG="C", LC_ALL="C", LC_MESSAGES="C")
+    module.run_command_environ_update = dict(LANGUAGE="C", LC_ALL="C")
 
     name = module.params["name"]
     state = module.params["state"]

@@ -11,7 +11,7 @@ author:
 short_description: OpenNebula inventory source
 version_added: "3.8.0"
 extends_documentation_fragment:
-  - constructed
+  - ansible.builtin.constructed
 description:
   - Get inventory hosts from OpenNebula cloud.
   - Uses an YAML configuration file ending with either C(opennebula.yml) or C(opennebula.yaml) to set parameter values.
@@ -95,7 +95,7 @@ from collections import namedtuple
 from ansible.errors import AnsibleError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 
-from ansible_collections.community.general.plugins.plugin_utils.unsafe import make_unsafe
+from ansible_collections.community.general.plugins.plugin_utils._unsafe import make_unsafe
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):

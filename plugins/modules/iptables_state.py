@@ -12,8 +12,8 @@ short_description: Save iptables state into a file or restore it from a file
 version_added: '1.1.0'
 author: quidame (@quidame)
 extends_documentation_fragment:
-  - community.general.attributes
-  - community.general.attributes.flow
+  - community.general._attributes
+  - community.general._attributes.flow
 description:
   - C(iptables) is used to set up, maintain, and inspect the tables of IP packet filter rules in the Linux kernel.
   - This module handles the saving and/or loading of rules. This is the same as the behaviour of the C(iptables-save) and
@@ -375,7 +375,7 @@ def main() -> None:
     )
 
     # We'll parse iptables-restore stderr
-    module.run_command_environ_update = dict(LANG="C", LC_MESSAGES="C")
+    module.run_command_environ_update = dict(LANGUAGE="C", LC_ALL="C")
 
     path = module.params["path"]
     state = module.params["state"]

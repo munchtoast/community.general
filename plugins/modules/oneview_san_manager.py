@@ -38,9 +38,9 @@ options:
     required: true
 
 extends_documentation_fragment:
-  - community.general.oneview
-  - community.general.oneview.validateetag
-  - community.general.attributes
+  - community.general._oneview
+  - community.general._oneview.validateetag
+  - community.general._attributes
 """
 
 EXAMPLES = r"""
@@ -128,7 +128,7 @@ san_manager:
   type: dict
 """
 
-from ansible_collections.community.general.plugins.module_utils.oneview import (
+from ansible_collections.community.general.plugins.module_utils._oneview import (
     OneViewModuleBase,
     OneViewModuleValueError,
 )
@@ -140,7 +140,6 @@ class SanManagerModule(OneViewModuleBase):
     MSG_DELETED = "SAN Manager deleted successfully."
     MSG_ALREADY_PRESENT = "SAN Manager is already present."
     MSG_ALREADY_ABSENT = "SAN Manager is already absent."
-    MSG_SAN_MANAGER_PROVIDER_DISPLAY_NAME_NOT_FOUND = "The provider '{0}' was not found."
 
     argument_spec = dict(
         state=dict(type="str", default="present", choices=["absent", "present", "connection_information_set"]),
@@ -161,7 +160,7 @@ class SanManagerModule(OneViewModuleBase):
         else:
             msg = 'A "name" or "connectionInfo" must be provided inside the "data" field for this operation. '
             msg += 'If a "connectionInfo" is provided, the "Host" name is considered as the "name" for the resource.'
-            raise OneViewModuleValueError(msg.format())
+            raise OneViewModuleValueError(msg)
 
         resource = self.resource_client.get_by_name(resource_name)
 
@@ -211,7 +210,7 @@ class SanManagerModule(OneViewModuleBase):
         provider_uri = self.resource_client.get_provider_uri(display_name)
 
         if not provider_uri:
-            raise OneViewModuleValueError(self.MSG_SAN_MANAGER_PROVIDER_DISPLAY_NAME_NOT_FOUND.format(display_name))
+            raise OneViewModuleValueError(f"The provider '{display_name}' was not found.")
 
         return provider_uri
 

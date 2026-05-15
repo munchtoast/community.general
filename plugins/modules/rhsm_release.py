@@ -19,7 +19,7 @@ notes:
 requirements:
   - Red Hat Enterprise Linux 6+ with subscription-manager installed
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -107,6 +107,7 @@ def main():
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     if os.getuid() != 0:
         module.fail_json(msg="Interacting with subscription-manager requires root permissions ('become: true')")

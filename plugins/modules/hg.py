@@ -14,7 +14,7 @@ description:
   - Manages Mercurial (hg) repositories. Supports SSH, HTTP/S and local address.
 author: "Yeukhon Wong (@yeukhon)"
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -219,6 +219,7 @@ def main():
             executable=dict(type="str"),
         ),
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
     repo = module.params["repo"]
     dest = module.params["dest"]
     revision = module.params["revision"]

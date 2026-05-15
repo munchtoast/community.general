@@ -15,7 +15,7 @@ short_description: Manage Networking
 requirements:
   - nmcli
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 description:
   - Manage the network devices. Create, modify and manage various connection and device type, for example V(ethernet), V(team),
     V(bond), V(vlan) and so on.
@@ -1705,6 +1705,7 @@ RETURN = r"""#
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.text.converters import to_text
 
 
@@ -2915,7 +2916,8 @@ def create_module() -> AnsibleModule:
         ],
         supports_check_mode=True,
     )
-    module.run_command_environ_update = dict(LANG="C", LC_ALL="C", LC_MESSAGES="C", LC_CTYPE="C")
+    locale = get_best_parsable_locale(module)
+    module.run_command_environ_update = dict(LANGUAGE=locale, LC_ALL=locale)
     return module
 
 

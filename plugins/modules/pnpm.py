@@ -17,7 +17,7 @@ author:
   - "Aritra Sen (@aretrosen)"
   - "Chris Hoffman (@chrishoffman), creator of NPM Ansible module"
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -327,6 +327,7 @@ def main():
     )
     arg_spec["global"] = dict(default=False, type="bool")
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     name = module.params["name"]
     alias = module.params["alias"]

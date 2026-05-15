@@ -22,7 +22,7 @@ description:
   - Use this module to manage crontab variables.
   - This module allows you to create, update, or delete cron variable definitions.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -360,6 +360,7 @@ def main():
         mutually_exclusive=[["insertbefore", "insertafter"]],
         supports_check_mode=False,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     name = module.params["name"]
     value = module.params["value"]

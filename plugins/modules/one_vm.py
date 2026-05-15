@@ -16,7 +16,7 @@ description:
 requirements:
   - pyone
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -449,7 +449,8 @@ instances_ids:
   sample: [1234, 1235]
 instances:
   description: A list of instances info whose state is changed or which are fetched with O(instance_ids) option.
-  type: complex
+  type: list
+  elements: dict
   returned: success
   contains:
     vm_id:
@@ -563,7 +564,8 @@ tagged_instances:
   description:
     - A list of instances info based on a specific attributes and/or labels that are specified with O(count_attributes) and
       O(count_labels) options.
-  type: complex
+  type: list
+  elements: dict
   returned: success
   contains:
     vm_id:
@@ -691,7 +693,7 @@ from collections import namedtuple
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.dict_transformations import dict_merge
 
-from ansible_collections.community.general.plugins.module_utils.opennebula import flatten, render
+from ansible_collections.community.general.plugins.module_utils._opennebula import flatten, render
 
 # Updateconf attributes documentation: https://docs.opennebula.io/6.10/integration_and_development/system_interfaces/api.html#one-vm-updateconf
 UPDATECONF_ATTRIBUTES = {

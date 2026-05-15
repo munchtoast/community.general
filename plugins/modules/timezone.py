@@ -20,7 +20,7 @@ description:
     when not using a minimal installation like Alpine Linux).
   - Windows and HPUX are not supported, please let us know if you find any other OS/distro in which this fails.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -863,6 +863,7 @@ def main():
         required_one_of=[["hwclock", "name"]],
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
     tz = Timezone(module)
 
     # Check the current state

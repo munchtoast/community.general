@@ -15,9 +15,9 @@ description:
   - Runs the C(facter) discovery program (U(https://github.com/puppetlabs/facter)) on the remote system, returning Ansible
     facts from the JSON data that can be useful for inventory purposes.
 extends_documentation_fragment:
-  - community.general.attributes
-  - community.general.attributes.facts
-  - community.general.attributes.facts_module
+  - community.general._attributes
+  - community.general._attributes.facts
+  - community.general._attributes.facts_module
 options:
   arguments:
     description:
@@ -48,12 +48,12 @@ EXAMPLES = r"""
 RETURN = r"""
 ansible_facts:
   description: Dictionary with one key C(facter).
-  returned: always
+  returned: success
   type: dict
   contains:
     facter:
       description: Dictionary containing facts discovered in the remote system.
-      returned: always
+      returned: success
       type: dict
 """
 
@@ -69,6 +69,7 @@ def main():
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     facter_path = module.get_bin_path("facter", opt_dirs=["/opt/puppetlabs/bin"])
 

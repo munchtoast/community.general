@@ -16,7 +16,7 @@ author:
 description:
   - Load or unload kernel modules.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -298,6 +298,7 @@ def build_module():
 
 def main():
     module = build_module()
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     modprobe = Modprobe(module)
 

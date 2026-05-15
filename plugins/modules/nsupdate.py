@@ -22,7 +22,7 @@ requirements:
   - gssapi (when using GSS-TSIG authentication)
 author: "Loic Blot (@nerzhul)"
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -209,7 +209,7 @@ from contextlib import suppress
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.community.general.plugins.module_utils import deps
+from ansible_collections.community.general.plugins.module_utils import _deps as deps
 
 with deps.declare("dnspython", url="https://github.com/rthalley/dnspython"):
     import dns.message
@@ -229,6 +229,8 @@ class RecordManager:
 
         self.server_fqdn = None
         self.server_ips = self.resolve_server()
+        self.keyring = None
+        self.keyname = None
 
         if module.params["key_algorithm"] == "hmac-md5":
             self.algorithm = "HMAC-MD5.SIG-ALG.REG.INT"
@@ -248,9 +250,6 @@ class RecordManager:
                 module.fail_json(msg="Missing key_secret")
             except binascii_error as e:
                 module.fail_json(msg=f"TSIG key error: {e}")
-        else:
-            self.keyring = None
-            self.keyname = None
 
         if module.params["zone"] is None:
             if module.params["record"][-1] != ".":

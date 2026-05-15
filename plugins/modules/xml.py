@@ -15,7 +15,7 @@ short_description: Manage bits and pieces of XML files or strings
 description:
   - A CRUD-like interface to managing bits of XML files.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -121,6 +121,13 @@ options:
       - Note that this might break your XML file if text values contain characters that could be interpreted as XML.
     type: bool
     default: false
+  huge_tree:
+    description:
+      - Disable libxml2 security restrictions on XML node size or document depth, allowing processing of very large XML files.
+      - This option should only be activated when needed, as it disables internal safety limits.
+    type: bool
+    default: false
+    version_added: "13.0.0"
   insertbefore:
     description:
       - Add additional child-element(s) before the first selected element for a given O(xpath).
@@ -189,7 +196,7 @@ EXAMPLES = r"""
   community.general.xml:
     path: /foo/bar.xml
     xpath: /business/rating
-    value: 11
+    value: "11"  # must quote to ensure it is parsed as string
 
 # Retrieve and display the number of nodes
 - name: Get count of 'beers' nodes
@@ -348,7 +355,7 @@ count:
 matches:
   description: The xpath matches found.
   type: list
-  returned: when parameter O(print_match) is set
+  returned: when parameter O(print_match) is set, or when parameter O(content) is set
 xmlstring:
   description: An XML string of the resulting output.
   type: str
@@ -363,7 +370,7 @@ import traceback
 from collections.abc import MutableMapping
 from io import BytesIO
 
-from ansible_collections.community.general.plugins.module_utils.version import LooseVersion
+from ansible_collections.community.general.plugins.module_utils._version import LooseVersion
 
 LXML_IMP_ERR = None
 try:
@@ -405,7 +412,7 @@ def do_print_match(module, tree, xpath, namespaces):
         match_xpaths.append(tree.getpath(m))
     match_str = json.dumps(match_xpaths)
     msg = f"selector '{xpath}' match: {match_str}"
-    finish(module, tree, xpath, namespaces, changed=False, msg=msg)
+    finish(module, tree, xpath, namespaces, changed=False, msg=msg, matches=match_xpaths)
 
 
 def count_nodes(module, tree, xpath, namespaces):
@@ -688,6 +695,16 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
             msg=f"Xpath {xpath} does not reference a node! tree is {etree.tostring(tree, pretty_print=True)}"
         )
 
+    if not isinstance(value, str):
+        target = f"attribute '{attribute}' at xpath '{xpath}'" if attribute else f"element text at xpath '{xpath}'"
+        module.fail_json(
+            msg=(
+                f"A non-string value {value!r} was parsed for {target}. "
+                "YAML values for booleans, octals, floats may not yield the string you intended. "
+                """Quote the value to be explicit, like `value: "yes"`."""
+            )
+        )
+
     for element in tree.xpath(xpath, namespaces=namespaces):
         if not attribute:
             changed = changed or (element.text != value)
@@ -875,6 +892,7 @@ def main():
             input_type=dict(type="str", default="yaml", choices=["xml", "yaml"]),
             backup=dict(type="bool", default=False),
             strip_cdata_tags=dict(type="bool", default=False),
+            huge_tree=dict(type="bool", default=False),
             insertbefore=dict(type="bool", default=False),
             insertafter=dict(type="bool", default=False),
         ),
@@ -918,6 +936,7 @@ def main():
     print_match = module.params["print_match"]
     count = module.params["count"]
     strip_cdata_tags = module.params["strip_cdata_tags"]
+    huge_tree = module.params["huge_tree"]
     insertbefore = module.params["insertbefore"]
     insertafter = module.params["insertafter"]
 
@@ -950,7 +969,7 @@ def main():
 
         # Try to parse in the target XML file
         try:
-            parser = etree.XMLParser(remove_blank_text=pretty_print, strip_cdata=strip_cdata_tags)
+            parser = etree.XMLParser(remove_blank_text=pretty_print, strip_cdata=strip_cdata_tags, huge_tree=huge_tree)
             doc = etree.parse(infile, parser)
         except etree.XMLSyntaxError as e:
             module.fail_json(msg=f"Error while parsing document: {xml_file or 'xml_string'} ({e})")

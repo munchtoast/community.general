@@ -17,7 +17,7 @@ notes:
   - This module works on ALT based distros.
   - Does NOT support checkmode, due to a limitation in C(apt-repo) tool.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -122,6 +122,7 @@ def main():
             update=dict(type="bool", default=False),
         ),
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     if not os.path.exists(APT_REPO_PATH):
         module.fail_json(msg="cannot find /usr/bin/apt-repo")

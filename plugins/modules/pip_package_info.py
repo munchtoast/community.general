@@ -13,8 +13,8 @@ short_description: Pip package information
 description:
   - Return information about installed pip packages.
 extends_documentation_fragment:
-  - community.general.attributes
-  - community.general.attributes.info_module
+  - community.general._attributes
+  - community.general._attributes.info_module
 options:
   clients:
     description:
@@ -123,6 +123,7 @@ def main():
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
     packages = {}
     results = {"packages": {}}
     clients = module.params["clients"]

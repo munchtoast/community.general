@@ -115,7 +115,7 @@ author:
   - quidame (@quidame)
 extends_documentation_fragment:
   - ansible.builtin.files
-  - community.general.attributes
+  - community.general._attributes
 seealso:
   - module: community.crypto.openssl_pkcs12
   - module: community.general.java_cert
@@ -531,7 +531,7 @@ def create_module() -> AnsibleModule:
         supports_check_mode=True,
         add_file_common_args=True,
     )
-    module.run_command_environ_update = dict(LANG="C", LC_ALL="C", LC_MESSAGES="C")
+    module.run_command_environ_update = dict(LANGUAGE="C", LC_ALL="C")
     return module
 
 

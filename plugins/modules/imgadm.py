@@ -13,7 +13,7 @@ description:
   - Manage SmartOS virtual machine images through imgadm(8).
 author: Jasper Lievisse Adriaanse (@jasperla)
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -276,6 +276,7 @@ def main():
         # provide a "noop" (or equivalent) mode to do a dry-run.
         supports_check_mode=False,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     imgadm = Imgadm(module)
 

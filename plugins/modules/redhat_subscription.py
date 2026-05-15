@@ -36,7 +36,7 @@ requirements:
   - subscription-manager
   - Optionally the C(dbus) Python library; this is usually included in the OS as it is used by C(subscription-manager).
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -931,7 +931,7 @@ class RhsmPools:
             args += " --consumed"
         else:
             args += " --available"
-        lang_env = dict(LANG="C", LC_ALL="C", LC_MESSAGES="C")
+        lang_env = dict(LANGUAGE="C", LC_ALL="C")
         rc, stdout, stderr = self.module.run_command(args, check_rc=True, environ_update=lang_env)
 
         products = []

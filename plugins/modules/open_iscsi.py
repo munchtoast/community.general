@@ -17,7 +17,7 @@ description:
 requirements:
   - C(open_iscsi) library and tools C(iscsiadm)
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -390,6 +390,7 @@ def main():
         ],
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     global iscsiadm_cmd
     iscsiadm_cmd = module.get_bin_path("iscsiadm", required=True)

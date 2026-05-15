@@ -29,7 +29,7 @@ def test_run0_basic(mocker, parser, reset_cli_args):
     cmd = call_become_plugin(task, var_options, cmd=default_cmd, executable=default_exe)
     assert (
         re.match(
-            f"{run0_exe} --user=root  {default_exe} -c 'echo {success}; {default_cmd}'",
+            f"SYSTEMD_COLORS=0 {run0_exe} --user=root  {default_exe} -c 'echo {success}; {default_cmd}'",
             cmd,
         )
         is not None
@@ -55,7 +55,7 @@ def test_run0_flags(mocker, parser, reset_cli_args):
     cmd = call_become_plugin(task, var_options, cmd=default_cmd, executable=default_exe)
     assert (
         re.match(
-            f"{run0_exe} --user=root --nice=15 {default_exe} -c 'echo {success}; {default_cmd}'",
+            f"SYSTEMD_COLORS=0 {run0_exe} --user=root --nice=15 {default_exe} -c 'echo {success}; {default_cmd}'",
             cmd,
         )
         is not None

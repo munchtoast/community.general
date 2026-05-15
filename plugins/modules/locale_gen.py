@@ -14,7 +14,7 @@ description:
 author:
   - Augustus Kling (@AugustusKling)
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -38,16 +38,11 @@ options:
 notes:
   - Currently the module is B(only supported for Debian, Ubuntu, and Arch Linux) systems.
   - This module requires the package C(locales) installed in Debian and Ubuntu systems.
-  - If C(/etc/locale.gen) exists, the module assumes to be using the B(glibc) mechanism, else if C(/var/lib/locales/supported.d/)
-    exists it assumes to be using the B(ubuntu_legacy) mechanism, else it raises an error.
+  - If C(/etc/locale.gen) exists, the module assumes to be using the B(glibc) mechanism, else it raises an error.
+    Support for C(/var/lib/locales/supported.d/) (the V(ubuntu_legacy) mechanism) has been removed in community.general 13.0.0.
   - When using V(glibc) mechanism, it manages locales by editing C(/etc/locale.gen) and running C(locale-gen).
-  - When using V(ubuntu_legacy) mechanism, it manages locales by editing C(/var/lib/locales/supported.d/local) and then running
-    C(locale-gen).
   - Please note that the module asserts the availability of the locale by checking the files C(/usr/share/i18n/SUPPORTED) and
     C(/usr/local/share/i18n/SUPPORTED), but the C(/usr/local) one is not supported by Archlinux.
-  - Please note that the code path that uses V(ubuntu_legacy) mechanism has not been tested for a while, because recent versions of
-    Ubuntu is already using the V(glibc) mechanism. There is no support for V(ubuntu_legacy), given our inability to test it.
-    Therefore, that mechanism is B(deprecated) and will be removed in community.general 13.0.0.
 """
 
 EXAMPLES = r"""
@@ -70,7 +65,6 @@ mechanism:
   type: str
   choices:
     - glibc
-    - ubuntu_legacy
   returned: success
   sample: glibc
   version_added: 10.2.0
@@ -79,14 +73,15 @@ mechanism:
 import os
 import re
 
-from ansible_collections.community.general.plugins.module_utils.locale_gen import locale_gen_runner, locale_runner
-from ansible_collections.community.general.plugins.module_utils.mh.deco import check_mode_skip
-from ansible_collections.community.general.plugins.module_utils.module_helper import StateModuleHelper
+from ansible_collections.community.general.plugins.module_utils._locale_gen import locale_gen_runner, locale_runner
+from ansible_collections.community.general.plugins.module_utils._mh.deco import check_mode_skip
+from ansible_collections.community.general.plugins.module_utils._module_helper import StateModuleHelper
 
 ETC_LOCALE_GEN = "/etc/locale.gen"
 VAR_LIB_LOCALES = "/var/lib/locales/supported.d"
 VAR_LIB_LOCALES_LOCAL = os.path.join(VAR_LIB_LOCALES, "local")
 SUPPORTED_LOCALES = ["/usr/share/i18n/SUPPORTED", "/usr/local/share/i18n/SUPPORTED"]
+RE_LOCALE_ENTRY = re.compile(r"^\s*#?\s*(?P<locale>\S+[\._\S]+) (?P<charset>\S+)\s*$")
 LOCALE_NORMALIZATION = {
     ".utf8": ".UTF-8",
     ".eucjp": ".EUC-JP",
@@ -113,10 +108,6 @@ class LocaleGen(StateModuleHelper):
 
     def __init_module__(self):
         self.mechanisms = dict(
-            ubuntu_legacy=dict(
-                available=SUPPORTED_LOCALES,
-                apply_change=self.apply_change_ubuntu_legacy,
-            ),
             glibc=dict(
                 available=SUPPORTED_LOCALES,
                 apply_change=self.apply_change_glibc,
@@ -126,18 +117,8 @@ class LocaleGen(StateModuleHelper):
         if os.path.exists(ETC_LOCALE_GEN):
             self.vars.ubuntu_mode = False
             self.vars.mechanism = "glibc"
-        elif os.path.exists(VAR_LIB_LOCALES):
-            self.vars.ubuntu_mode = True
-            self.vars.mechanism = "ubuntu_legacy"
-            self.module.deprecate(
-                "On this machine mechanism=ubuntu_legacy is used. This mechanism is deprecated and will be removed from"
-                " in community.general 13.0.0. If you see this message on a modern Debian or Ubuntu version,"
-                " please create an issue in the community.general repository",
-                version="13.0.0",
-                collection_name="community.general",
-            )
         else:
-            self.do_raise(f'{VAR_LIB_LOCALES} and {ETC_LOCALE_GEN} are missing. Is the package "locales" installed?')
+            self.do_raise(f'{ETC_LOCALE_GEN} is missing. Is the package "locales" installed?')
 
         self.runner = locale_runner(self.module)
 
@@ -165,8 +146,7 @@ class LocaleGen(StateModuleHelper):
                 with open(locale_path) as fd:
                     self.vars.available_lines.extend(fd.readlines())
 
-        re_locale_entry = re.compile(r"^\s*#?\s*(?P<locale>\S+[\._\S]+) (?P<charset>\S+)\s*$")
-        available_locale_entry_re_matches.extend([re_locale_entry.match(line) for line in self.vars.available_lines])
+        available_locale_entry_re_matches.extend([RE_LOCALE_ENTRY.match(line) for line in self.vars.available_lines])
 
         locales_not_found = []
         for locale in self.vars.name:
@@ -206,12 +186,24 @@ class LocaleGen(StateModuleHelper):
             name = name.replace(s, r)
         return name
 
+    def _get_charset_from_supported(self, locale):
+        """Look up the charset for a locale from the SUPPORTED files."""
+        for locale_path in SUPPORTED_LOCALES:
+            if os.path.exists(locale_path):
+                with open(locale_path) as fd:
+                    for line in fd:
+                        match = RE_LOCALE_ENTRY.match(line)
+                        if match and match.group("locale") == locale:
+                            return match.group("charset")
+        return None
+
     def set_locale_glibc(self, names, enabled=True):
         """Sets the state of the locale. Defaults to enabled."""
         with open(ETC_LOCALE_GEN) as fr:
             lines = fr.readlines()
 
-        locale_regexes = []
+        locale_regexes = {}
+        matched = set()
 
         for name in names:
             search_string = rf"^#?\s*{re.escape(name)} (?P<charset>.+)"
@@ -219,15 +211,25 @@ class LocaleGen(StateModuleHelper):
                 new_string = rf"{name} \g<charset>"
             else:
                 new_string = rf"# {name} \g<charset>"
-            re_search = re.compile(search_string)
-            locale_regexes.append([re_search, new_string])
+            locale_regexes[name] = (re.compile(search_string), new_string)
 
         def search_replace(line):
-            for [search, replace] in locale_regexes:
-                line = search.sub(replace, line)
+            for name, (search, replace) in locale_regexes.items():
+                new_line = search.sub(replace, line)
+                if new_line != line:
+                    matched.add(name)
+                line = new_line
             return line
 
         lines = [search_replace(line) for line in lines]
+
+        # For locales not found in /etc/locale.gen (e.g. on Gentoo), add them
+        if enabled:
+            for name in names:
+                if name not in matched:
+                    charset = self._get_charset_from_supported(name)
+                    if charset:
+                        lines.append(f"{name} {charset}\n")
 
         # Write the modified content back to the file
         with open(ETC_LOCALE_GEN, "w") as fw:
@@ -246,34 +248,6 @@ class LocaleGen(StateModuleHelper):
         runner = locale_gen_runner(self.module)
         with runner() as ctx:
             ctx.run()
-
-    def apply_change_ubuntu_legacy(self, target_state, names):
-        """Create or remove locale.
-
-        Keyword arguments:
-        target_state -- Desired state, either present or absent.
-        names -- Name list including encoding such as de_CH.UTF-8.
-        """
-        runner = locale_gen_runner(self.module)
-
-        if target_state == "present":
-            # Create locale.
-            # Ubuntu's patched locale-gen automatically adds the new locale to /var/lib/locales/supported.d/local
-            with runner() as ctx:
-                ctx.run()
-        else:
-            # Delete locale involves discarding the locale from /var/lib/locales/supported.d/local and regenerating all locales.
-            with open(VAR_LIB_LOCALES_LOCAL) as fr:
-                content = fr.readlines()
-            with open(VAR_LIB_LOCALES_LOCAL, "w") as fw:
-                for line in content:
-                    locale, charset = line.split(" ")
-                    if locale not in names:
-                        fw.write(line)
-            # Purge locales and regenerate.
-            # Please provide a patch if you know how to avoid regenerating the locales to keep!
-            with runner("purge") as ctx:
-                ctx.run()
 
     @check_mode_skip
     def __state_fallback__(self):

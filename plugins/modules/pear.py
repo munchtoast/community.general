@@ -17,7 +17,7 @@ description:
 author:
   - Jonathan Lestrelin (@jle64) <jonathan.lestrelin@gmail.com>
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -298,6 +298,7 @@ def main():
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     p = module.params
 

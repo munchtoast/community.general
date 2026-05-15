@@ -11,12 +11,12 @@ module: kopia_repository
 short_description: Manage Kopia repository
 author:
   - Dexter Le (@munchtoast)
-version_added: "12.6.0"
+version_added: "13.0.0"
 description:
   - Manage a Kopia repository using the Kopia CLI.
   - Supports creating, connecting, disconnecting, syncing, and throttling repositories.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -26,20 +26,20 @@ options:
   state:
     description:
       - Desired state of the Kopia repository.
-      - V(created) creates a new repository at the given backend.
-      - V(connected) connects to an existing repository or Kopia server.
-      - V(disconnected) disconnects from the current repository.
-      - V(synced) synchronises the current repository to another backend location.
-      - V(throttled) sets or gets throttle limits on the current repository.
     type: str
-    choices: [created, connected, disconnected, synced, throttled]
+    choices:
+      created: Creates a new repository at the given backend.
+      connected: Connects to an existing repository or Kopia server.
+      disconnected: Disconnects from the current repository.
+      synced: Synchronizes the current repository to another backend location.
+      throttled: Sets or gets throttle limits on the current repository.
     default: created
   password:
     description:
       - Repository password used to encrypt and decrypt repository contents.
       - Required if O(state=created) or O(state=connected).
     type: str
-  fingerprint_ssl:
+  fingerprint_tls:
     description:
       - TLS certificate fingerprint of the Kopia server.
       - Required if O(state=connected) and O(backend.provider=server).
@@ -92,7 +92,7 @@ options:
       storage_key:
         description:
           - Azure storage account key used to authenticate.
-          - Optional if O(backend.provider=azure); can be omitted when using managed identity or SAS tokens.
+          - Optional if O(backend.provider=azure); omit when using managed identity or SAS tokens.
         type: str
       sas_token:
         description:
@@ -141,7 +141,7 @@ options:
         type: path
       path:
         description:
-          - Local filesystem path or remote path for the backend.
+          - Local file system path or remote path for the backend.
           - Required if O(backend.provider=filesystem), O(backend.provider=rclone), or O(backend.provider=sftp).
         type: str
       host:
@@ -218,7 +218,7 @@ EXAMPLES = r"""
     password: secret
     config: /etc/kopia/root.config
     url: https://kopia.example.com:51515
-    fingerprint_ssl: AA:BB:CC:DD:EE:FF
+    fingerprint_tls: AA:BB:CC:DD:EE:FF
     backend:
       provider: server
 
@@ -263,11 +263,11 @@ kopia_repository:
   returned: always
 """
 
-from ansible_collections.community.general.plugins.module_utils.module_helper import StateModuleHelper
-from ansible_collections.community.general.plugins.module_utils.kopia import (
+from ansible_collections.community.general.plugins.module_utils._kopia import (
     KOPIA_COMMON_ARGUMENT_SPEC,
     kopia_runner,
 )
+from ansible_collections.community.general.plugins.module_utils._module_helper import StateModuleHelper
 
 
 class KopiaRepository(StateModuleHelper):
@@ -280,7 +280,7 @@ class KopiaRepository(StateModuleHelper):
                 default="created",
                 choices=["created", "connected", "disconnected", "synced", "throttled"],
             ),
-            fingerprint_ssl=dict(type="str"),
+            fingerprint_tls=dict(type="str"),
             url=dict(type="str"),
             throttle_operation=dict(type="str", default="get", choices=["set", "get"]),
             backend=dict(
@@ -289,7 +289,18 @@ class KopiaRepository(StateModuleHelper):
                     provider=dict(
                         type="str",
                         required=True,
-                        choices=["azure", "b2", "filesystem", "gcs", "gdrive", "rclone", "s3", "sftp", "webdav", "server"],
+                        choices=[
+                            "azure",
+                            "b2",
+                            "filesystem",
+                            "gcs",
+                            "gdrive",
+                            "rclone",
+                            "s3",
+                            "sftp",
+                            "webdav",
+                            "server",
+                        ],
                     ),
                     bucket=dict(type="str"),
                     container=dict(type="str"),
@@ -315,6 +326,17 @@ class KopiaRepository(StateModuleHelper):
                     webdav_password=dict(type="str", no_log=True),
                     prefix=dict(type="str"),
                 ),
+                required_if=[
+                    ("provider", "azure", ["container", "storage_account"]),
+                    ("provider", "b2", ["bucket", "access_key", "secret_access_key"]),
+                    ("provider", "filesystem", ["path"]),
+                    ("provider", "gcs", ["bucket"]),
+                    ("provider", "gdrive", ["folder_id"]),
+                    ("provider", "rclone", ["path"]),
+                    ("provider", "s3", ["bucket", "access_key", "secret_access_key"]),
+                    ("provider", "sftp", ["path", "host", "username"]),
+                    ("provider", "webdav", ["url"]),
+                ],
             ),
         ),
         required_if=[
@@ -356,15 +378,15 @@ class KopiaRepository(StateModuleHelper):
             output_process=self._process_command_output(True, "already exists"),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="repository", state=self.vars.state)
+            ctx.run(cli_action="repository")
 
     def state_connected(self):
         with self.runner(
-            "cli_action state backend password fingerprint_ssl url config",
+            "cli_action state backend password fingerprint_tls url config",
             output_process=self._process_command_output(True, "already connected"),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="repository", state=self.vars.state)
+            ctx.run(cli_action="repository")
 
     def state_disconnected(self):
         with self.runner(
@@ -372,7 +394,7 @@ class KopiaRepository(StateModuleHelper):
             output_process=self._process_command_output(True, "does not exist"),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="repository", state=self.vars.state)
+            ctx.run(cli_action="repository")
 
     def state_synced(self):
         with self.runner(
@@ -380,7 +402,7 @@ class KopiaRepository(StateModuleHelper):
             output_process=self._process_command_output(True, "already synced"),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="repository", state=self.vars.state)
+            ctx.run(cli_action="repository")
 
     def state_throttled(self):
         with self.runner(
@@ -388,7 +410,7 @@ class KopiaRepository(StateModuleHelper):
             output_process=self._process_command_output(True),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="repository", state=self.vars.state)
+            ctx.run(cli_action="repository")
 
 
 def main():

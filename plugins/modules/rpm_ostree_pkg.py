@@ -14,7 +14,7 @@ version_added: "2.0.0"
 description:
   - Install or uninstall overlay additional packages using C(rpm-ostree) command.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -190,6 +190,7 @@ def main():
             ),
         ),
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     rpm_ostree_pkg = RpmOstreePkg(module)
     rpm_ostree_pkg.ensure()

@@ -15,7 +15,7 @@ short_description: Manage packages on OpenBSD
 description:
   - Manage packages on OpenBSD using the pkg tools.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -153,7 +153,7 @@ import sqlite3
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.community.general.plugins.module_utils.version import LooseVersion
+from ansible_collections.community.general.plugins.module_utils._version import LooseVersion
 
 
 # Function used for executing commands.
@@ -166,7 +166,7 @@ def execute_command(cmd, module):
     # We set TERM to 'dumb' to keep pkg_add happy if the machine running
     # ansible is using a TERM that the managed machine does not know about,
     # e.g.: "No progress meter: failed termcap lookup on xterm-kitty".
-    return module.run_command(cmd_args, environ_update={"TERM": "dumb"})
+    return module.run_command(cmd_args, environ_update={"TERM": "dumb", "LANGUAGE": "C", "LC_ALL": "C"})
 
 
 def get_all_installed(module):

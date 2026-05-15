@@ -13,7 +13,7 @@ short_description: Locks / unlocks a installed package(s) from being updated by 
 description:
   - This module adds installed packages to yum versionlock to prevent the package(s) from being updated.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -151,6 +151,7 @@ def main():
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     state = module.params["state"]
     packages = module.params["name"]

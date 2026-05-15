@@ -23,7 +23,7 @@ requirements:
   - gnome-keyring (application - required for headless Gnome keyring access)
   - dbus-run-session (application - required for headless Gnome keyring access)
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -190,6 +190,7 @@ def run_module():
     )
 
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
     if not HAS_KEYRING:
         module.fail_json(msg=missing_required_lib("keyring"), exception=KEYRING_IMP_ERR)

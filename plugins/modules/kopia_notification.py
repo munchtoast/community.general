@@ -18,7 +18,7 @@ description:
     as well as listing, showing, deleting, and testing profiles.
   - Supports listing, showing, setting, and removing notification message templates.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -266,12 +266,12 @@ kopia_notification:
   returned: always
 """
 
-from ansible_collections.community.general.plugins.module_utils.cmd_runner import cmd_runner_fmt
-from ansible_collections.community.general.plugins.module_utils.module_helper import StateModuleHelper
-from ansible_collections.community.general.plugins.module_utils.kopia import (
+from ansible_collections.community.general.plugins.module_utils._cmd_runner import cmd_runner_fmt
+from ansible_collections.community.general.plugins.module_utils._kopia import (
     KOPIA_COMMON_ARGUMENT_SPEC,
     kopia_runner,
 )
+from ansible_collections.community.general.plugins.module_utils._module_helper import StateModuleHelper
 
 # Maps each module state to the kopia CLI words that follow `kopia notification`.
 # profile configure email  → ("profile", "configure", "email")

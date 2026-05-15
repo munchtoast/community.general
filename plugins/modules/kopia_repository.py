@@ -79,6 +79,28 @@ options:
           - Bucket name for the backend.
           - Required if O(backend.provider=b2), O(backend.provider=gcs), or O(backend.provider=s3).
         type: str
+      prefix:
+        description:
+          - Object key prefix within the backend storage.
+          - Optional if O(backend.provider=azure), O(backend.provider=b2),
+            O(backend.provider=gcs), or O(backend.provider=s3).
+        type: str
+      credentials_file:
+        description:
+          - Path to a JSON credentials file for authentication.
+          - Optional if O(backend.provider=gcs) or O(backend.provider=gdrive).
+        type: path
+      embed_credentials:
+        description:
+          - Embed provider credentials in the Kopia configuration file.
+          - Optional if O(backend.provider=gcs), O(backend.provider=gdrive),
+            or O(backend.provider=sftp).
+        type: bool
+      read_only:
+        description:
+          - Use a read-only scope to prevent write access.
+          - Optional if O(backend.provider=gcs) or O(backend.provider=gdrive).
+        type: bool
       container:
         description:
           - Azure Blob Storage container name.
@@ -104,6 +126,31 @@ options:
           - Azure storage domain override.
           - Optional if O(backend.provider=azure).
         type: str
+      client_id:
+        description:
+          - Azure service principal client ID.
+          - Optional if O(backend.provider=azure); overrides the C(AZURE_CLIENT_ID) environment variable.
+        type: str
+      client_secret:
+        description:
+          - Azure service principal client secret.
+          - Optional if O(backend.provider=azure); overrides the C(AZURE_CLIENT_SECRET) environment variable.
+        type: str
+      tenant_id:
+        description:
+          - Azure service principal tenant ID.
+          - Optional if O(backend.provider=azure); overrides the C(AZURE_TENANT_ID) environment variable.
+        type: str
+      client_cert:
+        description:
+          - Azure client certificate for service principal authentication.
+          - Optional if O(backend.provider=azure); overrides the C(AZURE_CLIENT_CERTIFICATE) environment variable.
+        type: str
+      azure_federated_token_file:
+        description:
+          - Path to a file containing an Azure Federated Identity token.
+          - Optional if O(backend.provider=azure).
+        type: path
       access_key:
         description:
           - Access key ID for the backend.
@@ -134,16 +181,33 @@ options:
           - Google Drive folder ID to use as the backend root.
           - Required if O(backend.provider=gdrive).
         type: str
-      credentials_file:
-        description:
-          - Path to a JSON credentials file for authentication.
-          - Optional if O(backend.provider=gcs) or O(backend.provider=gdrive).
-        type: path
       path:
         description:
           - Local file system path or remote path for the backend.
           - Required if O(backend.provider=filesystem), O(backend.provider=rclone), or O(backend.provider=sftp).
         type: str
+      rclone_exe:
+        description:
+          - Path to the rclone executable.
+          - Optional if O(backend.provider=rclone).
+        type: str
+      rclone_args:
+        description:
+          - Additional arguments to pass to rclone.
+          - Optional if O(backend.provider=rclone).
+        type: list
+        elements: str
+      rclone_env:
+        description:
+          - Additional environment variables to pass to rclone, each in C(KEY=VALUE) format.
+          - Optional if O(backend.provider=rclone).
+        type: list
+        elements: str
+      embed_rclone_config:
+        description:
+          - Embed the rclone configuration in the Kopia configuration file.
+          - Optional if O(backend.provider=rclone).
+        type: bool
       host:
         description:
           - SFTP server hostname.
@@ -159,16 +223,47 @@ options:
           - SFTP server port.
           - Optional if O(backend.provider=sftp); defaults to C(22).
         type: int
+      sftp_password:
+        description:
+          - Password for SFTP authentication.
+          - Optional if O(backend.provider=sftp).
+        type: str
       keyfile:
         description:
           - Path to the SSH private key file for SFTP authentication.
           - Optional if O(backend.provider=sftp).
         type: path
+      key_data:
+        description:
+          - SSH private key data for SFTP authentication, as a string.
+          - Optional if O(backend.provider=sftp).
+        type: str
       known_hosts:
         description:
           - Path to a known_hosts file for SFTP host key verification.
           - Optional if O(backend.provider=sftp).
         type: path
+      known_hosts_data:
+        description:
+          - Inline known_hosts entries for SFTP host key verification, as a string.
+          - Optional if O(backend.provider=sftp).
+        type: str
+      external:
+        description:
+          - When V(true), launch an external passwordless SSH command instead of the built-in SFTP client.
+          - Optional if O(backend.provider=sftp).
+        type: bool
+      ssh_command:
+        description:
+          - SSH executable to use for external SFTP connections.
+          - Optional if O(backend.provider=sftp).
+        type: str
+      ssh_args:
+        description:
+          - Additional arguments to pass to the external SSH command.
+          - Optional if O(backend.provider=sftp).
+        type: list
+        elements: str
       url:
         description:
           - WebDAV server URL.
@@ -183,12 +278,6 @@ options:
         description:
           - Password for WebDAV authentication.
           - Optional if O(backend.provider=webdav).
-        type: str
-      prefix:
-        description:
-          - Object key prefix within the backend storage.
-          - Optional if O(backend.provider=azure), O(backend.provider=b2),
-            O(backend.provider=gcs), or O(backend.provider=s3).
         type: str
 """
 
@@ -302,29 +391,53 @@ class KopiaRepository(StateModuleHelper):
                             "server",
                         ],
                     ),
+                    # common
                     bucket=dict(type="str"),
+                    prefix=dict(type="str"),
+                    credentials_file=dict(type="path"),
+                    embed_credentials=dict(type="bool"),
+                    read_only=dict(type="bool"),
+                    # azure
                     container=dict(type="str"),
                     storage_account=dict(type="str"),
                     storage_key=dict(type="str", no_log=True),
                     sas_token=dict(type="str", no_log=True),
                     storage_domain=dict(type="str"),
+                    client_id=dict(type="str"),
+                    client_secret=dict(type="str", no_log=True),
+                    tenant_id=dict(type="str"),
+                    client_cert=dict(type="str"),
+                    azure_federated_token_file=dict(type="path"),
+                    # b2 / s3
                     access_key=dict(type="str", no_log=True),
                     secret_access_key=dict(type="str", no_log=True),
                     session_token=dict(type="str", no_log=True),
                     endpoint=dict(type="str"),
                     region=dict(type="str"),
+                    # gdrive
                     folder_id=dict(type="str"),
-                    credentials_file=dict(type="path"),
+                    # rclone
                     path=dict(type="str"),
+                    rclone_exe=dict(type="str"),
+                    rclone_args=dict(type="list", elements="str"),
+                    rclone_env=dict(type="list", elements="str"),
+                    embed_rclone_config=dict(type="bool"),
+                    # sftp
                     host=dict(type="str"),
                     username=dict(type="str"),
                     port=dict(type="int"),
+                    sftp_password=dict(type="str", no_log=True),
                     keyfile=dict(type="path"),
+                    key_data=dict(type="str", no_log=True),
                     known_hosts=dict(type="path"),
+                    known_hosts_data=dict(type="str"),
+                    external=dict(type="bool"),
+                    ssh_command=dict(type="str"),
+                    ssh_args=dict(type="list", elements="str"),
+                    # webdav
                     url=dict(type="str"),
                     webdav_username=dict(type="str"),
                     webdav_password=dict(type="str", no_log=True),
-                    prefix=dict(type="str"),
                 ),
                 required_if=[
                     ("provider", "azure", ["container", "storage_account"]),

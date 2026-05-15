@@ -260,3 +260,56 @@ test_cases:
           out: "alice@backuphost FULL"
           err: ''
         - *users-list-ok
+
+  - id: add_acl_entry_no_overwrite
+    input:
+      state: acl_present
+      acl_user: alice@backuphost
+      acl_access: FULL
+      acl_no_overwrite: true
+      config: /etc/kopia/root.config
+    output:
+      changed: false
+    mocks:
+      run_command:
+        - *users-list-ok
+        - command:
+            - /testbin/kopia
+            - server
+            - acl
+            - add
+            - --user
+            - alice@backuphost
+            - --access
+            - FULL
+            - --no-overwrite
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *users-list-ok
+
+  - id: delete_acl_entry_no_such_rule
+    input:
+      state: acl_absent
+      acl_user: alice@backuphost
+      config: /etc/kopia/root.config
+    output:
+      changed: false
+    mocks:
+      run_command:
+        - *users-list-ok
+        - command:
+            - /testbin/kopia
+            - server
+            - acl
+            - delete
+            - --user
+            - alice@backuphost
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 1
+          out: ''
+          err: 'no such rule'
+        - *users-list-ok

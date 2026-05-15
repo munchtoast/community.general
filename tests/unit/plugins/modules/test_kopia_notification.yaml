@@ -298,3 +298,158 @@ test_cases:
           out: ''
           err: ''
         - *profiles-list-ok
+
+  - id: test_profile
+    input:
+      state: profile_tested
+      profile_name: ops-email
+      config: /etc/kopia/root.config
+    output:
+      changed: false
+    mocks:
+      run_command:
+        - *profiles-list-ok
+        - command:
+            - /testbin/kopia
+            - notification
+            - profile
+            - test
+            - --profile-name
+            - ops-email
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *profiles-list-ok
+
+  - id: show_template
+    input:
+      state: template_shown
+      template_name: snapshot-complete
+      config: /etc/kopia/root.config
+    output:
+      changed: false
+    mocks:
+      run_command:
+        - *profiles-list-ok
+        - command:
+            - /testbin/kopia
+            - notification
+            - template
+            - show
+            - snapshot-complete
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: "Subject: Snapshot complete"
+          err: ''
+        - *profiles-list-ok
+
+  - id: remove_template_no_such_template
+    input:
+      state: template_removed
+      template_name: snapshot-complete
+      config: /etc/kopia/root.config
+    output:
+      changed: false
+    mocks:
+      run_command:
+        - *profiles-list-ok
+        - command:
+            - /testbin/kopia
+            - notification
+            - template
+            - remove
+            - snapshot-complete
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 1
+          out: ''
+          err: 'no such template'
+        - *profiles-list-ok
+
+  - id: configure_email_with_cc_and_identity
+    input:
+      state: profile_email
+      profile_name: ops-email
+      smtp_server: smtp.example.com
+      smtp_port: 587
+      smtp_username: notify@example.com
+      smtp_password: smtpsecret
+      smtp_identity: "notify"
+      mail_from: notify@example.com
+      mail_to: ops@example.com
+      mail_cc: manager@example.com
+      config: /etc/kopia/root.config
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *profiles-list-empty
+        - command:
+            - /testbin/kopia
+            - notification
+            - profile
+            - configure
+            - email
+            - --profile-name
+            - ops-email
+            - --smtp-server
+            - smtp.example.com
+            - --smtp-port
+            - "587"
+            - --smtp-username
+            - notify@example.com
+            - --smtp-password
+            - smtpsecret
+            - --smtp-identity
+            - notify
+            - --mail-from
+            - notify@example.com
+            - --mail-to
+            - ops@example.com
+            - --mail-cc
+            - manager@example.com
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *profiles-list-ok
+
+  - id: configure_webhook_with_send_test
+    input:
+      state: profile_webhook
+      profile_name: ops-webhook
+      webhook_endpoint: https://hooks.example.com/kopia
+      webhook_method: POST
+      format: md
+      send_test: true
+      config: /etc/kopia/root.config
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *profiles-list-empty
+        - command:
+            - /testbin/kopia
+            - notification
+            - profile
+            - configure
+            - webhook
+            - --profile-name
+            - ops-webhook
+            - --endpoint
+            - https://hooks.example.com/kopia
+            - --method
+            - POST
+            - --format
+            - md
+            - --send-test-notification
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *profiles-list-ok

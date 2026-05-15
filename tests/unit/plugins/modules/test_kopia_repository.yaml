@@ -245,3 +245,186 @@ test_cases:
           out: "upload-speed-limit: 0"
           err: ''
         - *status-ok
+
+  - id: connect_azure_service_principal
+    input:
+      state: connected
+      password: secret
+      config: /etc/kopia/root.config
+      backend:
+        provider: azure
+        container: my-container
+        storage_account: myaccount
+        client_id: cid
+        client_secret: csecret
+        tenant_id: tid
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *status-empty
+        - command:
+            - /testbin/kopia
+            - repository
+            - connect
+            - azure
+            - --container=my-container
+            - --storage-account=myaccount
+            - --client-id=cid
+            - --client-secret=csecret
+            - --tenant-id=tid
+            - --password=secret
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *status-ok
+
+  - id: create_gcs_embed_credentials
+    input:
+      state: created
+      password: secret
+      config: /etc/kopia/root.config
+      backend:
+        provider: gcs
+        bucket: my-gcs-bucket
+        credentials_file: /etc/gcs.json
+        embed_credentials: true
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *status-empty
+        - command:
+            - /testbin/kopia
+            - repository
+            - create
+            - gcs
+            - --bucket=my-gcs-bucket
+            - --credentials-file=/etc/gcs.json
+            - --embed-credentials
+            - --password=secret
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *status-ok
+
+  - id: create_rclone_with_args
+    input:
+      state: created
+      password: secret
+      config: /etc/kopia/root.config
+      backend:
+        provider: rclone
+        path: "myremote:backups"
+        rclone_exe: /usr/local/bin/rclone
+        rclone_args:
+          - "--transfers=4"
+          - "--checkers=8"
+        rclone_env:
+          - "RCLONE_CONFIG=/etc/rclone.conf"
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *status-empty
+        - command:
+            - /testbin/kopia
+            - repository
+            - create
+            - rclone
+            - --remote-path=myremote:backups
+            - --rclone-exe=/usr/local/bin/rclone
+            - --rclone-args
+            - "--transfers=4"
+            - --rclone-args
+            - "--checkers=8"
+            - --rclone-env
+            - RCLONE_CONFIG=/etc/rclone.conf
+            - --password=secret
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *status-ok
+
+  - id: create_sftp_with_password
+    input:
+      state: created
+      password: secret
+      config: /etc/kopia/root.config
+      backend:
+        provider: sftp
+        path: /backup
+        host: sftp.example.com
+        username: admin
+        sftp_password: sftpsecret
+        known_hosts: /root/.ssh/known_hosts
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *status-empty
+        - command:
+            - /testbin/kopia
+            - repository
+            - create
+            - sftp
+            - --path=/backup
+            - --host=sftp.example.com
+            - --username=admin
+            - --sftp-password=sftpsecret
+            - --known-hosts=/root/.ssh/known_hosts
+            - --password=secret
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *status-ok
+
+  - id: create_sftp_external_ssh
+    input:
+      state: created
+      password: secret
+      config: /etc/kopia/root.config
+      backend:
+        provider: sftp
+        path: /backup
+        host: sftp.example.com
+        username: admin
+        external: true
+        ssh_command: /usr/bin/ssh
+        ssh_args:
+          - "-o"
+          - "StrictHostKeyChecking=no"
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *status-empty
+        - command:
+            - /testbin/kopia
+            - repository
+            - create
+            - sftp
+            - --path=/backup
+            - --host=sftp.example.com
+            - --username=admin
+            - --external
+            - --ssh-command=/usr/bin/ssh
+            - --ssh-args
+            - "-o"
+            - --ssh-args
+            - StrictHostKeyChecking=no
+            - --password=secret
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *status-ok

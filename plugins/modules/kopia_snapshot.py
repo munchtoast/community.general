@@ -16,7 +16,7 @@ description:
   - Manage Kopia snapshots using the Kopia CLI.
   - Supports creating, deleting, and verifying snapshots, as well as listing and expiring them.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -184,20 +184,12 @@ kopia_snapshot:
   returned: always
 """
 
-from ansible_collections.community.general.plugins.module_utils.cmd_runner import cmd_runner_fmt
-from ansible_collections.community.general.plugins.module_utils.module_helper import StateModuleHelper
-from ansible_collections.community.general.plugins.module_utils.kopia import (
+from ansible_collections.community.general.plugins.module_utils._cmd_runner import cmd_runner_fmt
+from ansible_collections.community.general.plugins.module_utils._kopia import (
     KOPIA_COMMON_ARGUMENT_SPEC,
     kopia_runner,
 )
-
-_SNAPSHOT_STATE_MAP = {
-    "created": "create",
-    "deleted": "delete",
-    "expired": "expire",
-    "listed": "list",
-    "verified": "verify",
-}
+from ansible_collections.community.general.plugins.module_utils._module_helper import StateModuleHelper
 
 
 class KopiaSnapshot(StateModuleHelper):
@@ -231,13 +223,10 @@ class KopiaSnapshot(StateModuleHelper):
         self.runner = kopia_runner(
             self.module,
             extra_formats=dict(
-                snapshot_state=cmd_runner_fmt.as_map(_SNAPSHOT_STATE_MAP),
                 source=cmd_runner_fmt.as_list(),
                 snapshot_id=cmd_runner_fmt.as_list(),
                 description=cmd_runner_fmt.as_opt_eq_val("--description"),
-                tags=cmd_runner_fmt.as_func(
-                    lambda v: [x for tag in v for x in ("--tags", tag)]
-                ),
+                tags=cmd_runner_fmt.as_func(lambda v: [x for tag in v for x in ("--tags", tag)]),
                 all_sources=cmd_runner_fmt.as_bool("--all"),
                 delete=cmd_runner_fmt.as_bool("--delete"),
                 parallel=cmd_runner_fmt.as_opt_eq_val("--parallel"),
@@ -272,42 +261,42 @@ class KopiaSnapshot(StateModuleHelper):
 
     def state_created(self):
         with self.runner(
-            "cli_action snapshot_state source description tags parallel fail_fast ignore_identical password config",
+            "cli_action state source description tags parallel fail_fast ignore_identical password config",
             output_process=self._process_command_output(True),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="snapshot", snapshot_state=self.vars.state)
+            ctx.run(cli_action="snapshot")
 
     def state_deleted(self):
         with self.runner(
-            "cli_action snapshot_state snapshot_id delete config",
+            "cli_action state snapshot_id delete config",
             output_process=self._process_command_output(True),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="snapshot", snapshot_state=self.vars.state)
+            ctx.run(cli_action="snapshot")
 
     def state_expired(self):
         with self.runner(
-            "cli_action snapshot_state source all_sources delete config",
+            "cli_action state source all_sources delete config",
             output_process=self._process_command_output(True),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="snapshot", snapshot_state=self.vars.state)
+            ctx.run(cli_action="snapshot")
 
     def state_listed(self):
         with self.runner(
-            "cli_action snapshot_state source all_sources tags config",
+            "cli_action state source all_sources tags config",
             output_process=self._process_command_output(True),
         ) as ctx:
-            ctx.run(cli_action="snapshot", snapshot_state=self.vars.state)
+            ctx.run(cli_action="snapshot")
 
     def state_verified(self):
         with self.runner(
-            "cli_action snapshot_state snapshot_id parallel verify_files_percent password config",
+            "cli_action state snapshot_id parallel verify_files_percent password config",
             output_process=self._process_command_output(True),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="snapshot", snapshot_state=self.vars.state)
+            ctx.run(cli_action="snapshot")
 
 
 def main():

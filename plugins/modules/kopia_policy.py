@@ -17,7 +17,7 @@ description:
   - Supports setting, deleting, showing, and listing policies.
   - Policies control retention, scheduling, file exclusions, and compression for snapshots.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -222,19 +222,12 @@ kopia_policy:
   returned: always
 """
 
-from ansible_collections.community.general.plugins.module_utils.cmd_runner import cmd_runner_fmt
-from ansible_collections.community.general.plugins.module_utils.module_helper import StateModuleHelper
-from ansible_collections.community.general.plugins.module_utils.kopia import (
+from ansible_collections.community.general.plugins.module_utils._cmd_runner import cmd_runner_fmt
+from ansible_collections.community.general.plugins.module_utils._kopia import (
     KOPIA_COMMON_ARGUMENT_SPEC,
     kopia_runner,
 )
-
-_POLICY_STATE_MAP = {
-    "set": "set",
-    "deleted": "delete",
-    "listed": "list",
-    "shown": "show",
-}
+from ansible_collections.community.general.plugins.module_utils._module_helper import StateModuleHelper
 
 
 def _fmt_retention(value):
@@ -345,7 +338,6 @@ class KopiaPolicy(StateModuleHelper):
         self.runner = kopia_runner(
             self.module,
             extra_formats=dict(
-                policy_state=cmd_runner_fmt.as_map(_POLICY_STATE_MAP),
                 target=cmd_runner_fmt.as_list(),
                 global_policy=cmd_runner_fmt.as_bool("--global"),
                 retention=cmd_runner_fmt.as_func(_fmt_retention),
@@ -380,33 +372,33 @@ class KopiaPolicy(StateModuleHelper):
 
     def state_set(self):
         with self.runner(
-            "cli_action policy_state target global_policy retention scheduling files compression config",
+            "cli_action state target global_policy retention scheduling files compression config",
             output_process=self._process_command_output(True),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="policy", policy_state=self.vars.state)
+            ctx.run(cli_action="policy")
 
     def state_deleted(self):
         with self.runner(
-            "cli_action policy_state target global_policy config",
+            "cli_action state target global_policy config",
             output_process=self._process_command_output(True, "no such policy"),
             check_mode_skip=True,
         ) as ctx:
-            ctx.run(cli_action="policy", policy_state=self.vars.state)
+            ctx.run(cli_action="policy")
 
     def state_listed(self):
         with self.runner(
-            "cli_action policy_state config",
+            "cli_action state config",
             output_process=self._process_command_output(True),
         ) as ctx:
-            ctx.run(cli_action="policy", policy_state=self.vars.state)
+            ctx.run(cli_action="policy")
 
     def state_shown(self):
         with self.runner(
-            "cli_action policy_state target global_policy config",
+            "cli_action state target global_policy config",
             output_process=self._process_command_output(True),
         ) as ctx:
-            ctx.run(cli_action="policy", policy_state=self.vars.state)
+            ctx.run(cli_action="policy")
 
 
 def main():

@@ -237,3 +237,156 @@ test_cases:
           out: "Verified 1 snapshot."
           err: ''
         - *list-ok
+
+  - id: create_snapshot_with_parallel
+    input:
+      state: created
+      source: /home/user
+      password: secret
+      config: /etc/kopia/root.config
+      parallel: 4
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *list-empty
+        - command:
+            - /testbin/kopia
+            - snapshot
+            - create
+            - /home/user
+            - --parallel=4
+            - --password=secret
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: "Created snapshot abc123"
+          err: ''
+        - *list-ok
+
+  - id: create_snapshot_fail_fast
+    input:
+      state: created
+      source: /home/user
+      password: secret
+      config: /etc/kopia/root.config
+      fail_fast: true
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *list-empty
+        - command:
+            - /testbin/kopia
+            - snapshot
+            - create
+            - /home/user
+            - --fail-fast
+            - --password=secret
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: "Created snapshot abc123"
+          err: ''
+        - *list-ok
+
+  - id: create_snapshot_ignore_identical
+    input:
+      state: created
+      source: /home/user
+      password: secret
+      config: /etc/kopia/root.config
+      ignore_identical: true
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *list-empty
+        - command:
+            - /testbin/kopia
+            - snapshot
+            - create
+            - /home/user
+            - --ignore-identical-snapshots
+            - --password=secret
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: "Created snapshot abc123"
+          err: ''
+        - *list-ok
+
+  - id: delete_multiple_snapshots
+    input:
+      state: deleted
+      snapshot_id:
+        - abc1234def5678
+        - def5678abc1234
+      delete: true
+      config: /etc/kopia/root.config
+    output:
+      changed: true
+    mocks:
+      run_command:
+        - *list-ok
+        - command:
+            - /testbin/kopia
+            - snapshot
+            - delete
+            - abc1234def5678
+            - def5678abc1234
+            - --delete
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: ''
+          err: ''
+        - *list-empty
+
+  - id: verify_with_parallel
+    input:
+      state: verified
+      password: secret
+      config: /etc/kopia/root.config
+      parallel: 8
+    output:
+      changed: false
+    mocks:
+      run_command:
+        - *list-ok
+        - command:
+            - /testbin/kopia
+            - snapshot
+            - verify
+            - --parallel=8
+            - --password=secret
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: "Verified 5 files."
+          err: ''
+        - *list-ok
+
+  - id: list_snapshots_with_tags
+    input:
+      state: listed
+      config: /etc/kopia/root.config
+      tags:
+        - env:production
+    output:
+      changed: false
+    mocks:
+      run_command:
+        - *list-ok
+        - command:
+            - /testbin/kopia
+            - snapshot
+            - list
+            - --tags
+            - env:production
+            - --config-file=/etc/kopia/root.config
+          environ: *env-def
+          rc: 0
+          out: "abc123 /home/user 2026-01-01 00:00:00 UTC"
+          err: ''
+        - *list-ok

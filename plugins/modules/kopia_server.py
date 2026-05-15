@@ -21,7 +21,7 @@ description:
   - To manage the server process lifecycle use your system's service manager (for
     example C(ansible.builtin.systemd)).
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -158,12 +158,12 @@ kopia_server:
   returned: always
 """
 
-from ansible_collections.community.general.plugins.module_utils.cmd_runner import cmd_runner_fmt
-from ansible_collections.community.general.plugins.module_utils.module_helper import StateModuleHelper
-from ansible_collections.community.general.plugins.module_utils.kopia import (
+from ansible_collections.community.general.plugins.module_utils._cmd_runner import cmd_runner_fmt
+from ansible_collections.community.general.plugins.module_utils._kopia import (
     KOPIA_COMMON_ARGUMENT_SPEC,
     kopia_runner,
 )
+from ansible_collections.community.general.plugins.module_utils._module_helper import StateModuleHelper
 
 # Maps module states to (cli_group, cli_subcommand) pairs used in _run_server_cmd().
 _STATE_CLI_MAP = {
@@ -185,7 +185,15 @@ class KopiaServer(StateModuleHelper):
             state=dict(
                 type="str",
                 default="user_present",
-                choices=["user_present", "user_absent", "users_listed", "acl_present", "acl_absent", "acl_listed", "acl_enabled"],
+                choices=[
+                    "user_present",
+                    "user_absent",
+                    "users_listed",
+                    "acl_present",
+                    "acl_absent",
+                    "acl_listed",
+                    "acl_enabled",
+                ],
             ),
             username=dict(type="str"),
             user_password=dict(type="str", no_log=True),

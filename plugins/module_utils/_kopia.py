@@ -14,14 +14,23 @@ from ansible_collections.community.general.plugins.module_utils._cmd_runner impo
 if t.TYPE_CHECKING:
     from ansible.module_utils.basic import AnsibleModule
 
-# Maps kopia_repository module state values to kopia CLI subcommands.
-# Used with cmd_runner_fmt.as_map() for the 'state' arg format.
-REPOSITORY_STATE_MAP = {
+# Maps kopia module state values to kopia CLI subcommands.
+# Covers all kopia modules. Used with cmd_runner_fmt.as_map() for the 'state' arg format.
+STATE_MAP = {
+    # kopia_repository
     "created": "create",
     "connected": "connect",
     "disconnected": "disconnect",
     "synced": "sync-to",
     "throttled": "throttle",
+    # kopia_snapshot
+    "deleted": "delete",
+    "expired": "expire",
+    "listed": "list",
+    "verified": "verify",
+    # kopia_policy
+    "set": "set",
+    "shown": "show",
 }
 
 # Maps backend provider names to their CLI flag names.
@@ -37,6 +46,11 @@ _PROVIDER_BACKEND_MAP = {
         "storage_key": "--storage-key",
         "sas_token": "--sas-token",
         "storage_domain": "--storage-domain",
+        "client_id": "--client-id",
+        "client_secret": "--client-secret",
+        "tenant_id": "--tenant-id",
+        "client_cert": "--client-cert",
+        "azure_federated_token_file": "--azure-federated-token-file",
         "prefix": "--prefix",
     },
     "b2": {
@@ -51,14 +65,21 @@ _PROVIDER_BACKEND_MAP = {
     "gcs": {
         "bucket": "--bucket",
         "credentials_file": "--credentials-file",
+        "embed_credentials": "--embed-credentials",
+        "read_only": "--read-only",
         "prefix": "--prefix",
     },
     "gdrive": {
         "folder_id": "--folder-id",
         "credentials_file": "--credentials-file",
+        "read_only": "--read-only",
     },
     "rclone": {
         "path": "--remote-path",
+        "rclone_exe": "--rclone-exe",
+        "rclone_args": "--rclone-args",
+        "rclone_env": "--rclone-env",
+        "embed_rclone_config": "--embed-rclone-config",
     },
     "s3": {
         "bucket": "--bucket",
@@ -74,8 +95,15 @@ _PROVIDER_BACKEND_MAP = {
         "host": "--host",
         "username": "--username",
         "port": "--port",
+        "sftp_password": "--sftp-password",
         "keyfile": "--keyfile",
+        "key_data": "--key-data",
         "known_hosts": "--known-hosts",
+        "known_hosts_data": "--known-hosts-data",
+        "embed_credentials": "--embed-credentials",
+        "external": "--external",
+        "ssh_command": "--ssh-command",
+        "ssh_args": "--ssh-args",
     },
     "webdav": {
         "url": "--url",
@@ -100,6 +128,10 @@ def fmt_backend(value):
 
     For the "server" provider, returns [] because server connect uses top-level
     flags (--url, --server-cert-fingerprint) passed separately.
+
+    Boolean params emit the bare flag when True and are skipped when False
+    (False is always the kopia default).  List params emit one --flag item pair
+    per element.
     """
     provider = value["provider"]
     if provider == "server":
@@ -107,7 +139,15 @@ def fmt_backend(value):
     result = [provider]
     for param_name, flag in _PROVIDER_BACKEND_MAP[provider].items():
         param_value = value.get(param_name)
-        if param_value is not None:
+        if param_value is None:
+            continue
+        if isinstance(param_value, bool):
+            if param_value:
+                result.append(flag)
+        elif isinstance(param_value, list):
+            for item in param_value:
+                result.extend([flag, str(item)])
+        else:
             result.append(f"{flag}={param_value}")
     return result
 
@@ -120,7 +160,7 @@ def kopia_runner(module: AnsibleModule, extra_formats: dict | None = None, **kwa
     """
     formats = dict(
         cli_action=cmd_runner_fmt.as_list(),
-        state=cmd_runner_fmt.as_map(REPOSITORY_STATE_MAP),
+        state=cmd_runner_fmt.as_map(STATE_MAP),
         backend=cmd_runner_fmt.as_func(fmt_backend),
         password=cmd_runner_fmt.as_opt_eq_val("--password"),
         fingerprint_tls=cmd_runner_fmt.as_opt_eq_val("--server-cert-fingerprint"),

@@ -14,6 +14,7 @@ import json
 
 import pytest
 
+from ansible_collections.community.general.plugins.module_utils._pacemaker import resource_status_shows_clone_member
 from ansible_collections.community.general.plugins.modules import pacemaker_resource
 
 from .uthelper import RunCommandMock, UTHelper
@@ -145,3 +146,38 @@ def test_present_wait_timeout_raises(mocker, capfd):
     assert result.get("failed") is True
     assert "Timed out" in result["msg"]
     assert "virtual-ip" in result["msg"]
+
+
+@pytest.mark.parametrize(
+    "status_output,name,expected",
+    [
+        (
+            "  * Clone Set: virtual-ip-clone [virtual-ip]\t(ocf:heartbeat:IPAddr2):\t Started",
+            "virtual-ip",
+            True,
+        ),
+        (
+            "  * Clone Set: locking-clone [locking]:\n    * Started: [ md-nds-smb01 md-nds-smb02 md-nds-smb03 ]",
+            "locking",
+            True,
+        ),
+        (
+            "  * virtual-ip\t(ocf:heartbeat:IPAddr2):\t Started",
+            "virtual-ip",
+            False,
+        ),
+        (
+            "  * Clone Set: other-clone [other]\t(ocf:heartbeat:IPAddr2):\t Started",
+            "virtual-ip",
+            False,
+        ),
+        ("", "virtual-ip", False),
+        (
+            "  * Clone Set: virtual-ip-clone [virtual-ip]\t(ocf:heartbeat:IPAddr2):\t Started",
+            "",
+            False,
+        ),
+    ],
+)
+def test_resource_status_shows_clone_member(status_output, name, expected):
+    assert resource_status_shows_clone_member(status_output, name) is expected

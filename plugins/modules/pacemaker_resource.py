@@ -149,6 +149,7 @@ from ansible_collections.community.general.plugins.module_utils._module_helper i
 from ansible_collections.community.general.plugins.module_utils._pacemaker import (
     get_pacemaker_maintenance_mode,
     pacemaker_runner,
+    resource_status_shows_clone_member,
     wait_for_resource,
 )
 
@@ -230,6 +231,8 @@ class PacemakerResource(StateModuleHelper):
             return [x for k in value for x in (arg, k)]
 
     def state_absent(self):
+        if not self.vars.previous_value:
+            return
         force = get_pacemaker_maintenance_mode(self.runner)
         with self.runner(
             "cli_action state name force",
@@ -255,6 +258,8 @@ class PacemakerResource(StateModuleHelper):
             wait_for_resource(self.runner, "resource", self.vars.name, self.vars.wait, ready_states=_READY_STATES)
 
     def state_cloned(self):
+        if resource_status_shows_clone_member(self.vars.previous_value or "", self.module.params["name"]):
+            return
         with self.runner(
             "cli_action state name resource_clone_ids resource_clone_meta",
             output_process=self._process_command_output(

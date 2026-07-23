@@ -314,26 +314,11 @@ test_cases:
           rc: 1
           out: ""
           err: "Error: resource or tag id 'virtual-ip' not found"
-        - command: [/testbin/pcs, property, config]
-          environ: *env-def
-          rc: 1
-          out: |
-            Cluster Properties: cib-bootstrap-options
-            cluster-infrastructure=corosync
-            cluster-name=hacluster
-            dc-version=2.1.9-1.fc41-7188dbf
-            have-watchdog=false
-          err: ""
-        - command: [/testbin/pcs, resource, remove, virtual-ip]
-          environ: *env-def
-          rc: 1
-          out: ""
-          err: "Error: Resource 'virtual-ip' does not exist.\n"
         - command: [/testbin/pcs, resource, status, virtual-ip]
           environ: *env-def
           rc: 1
           out: ""
-          err: "Error: resource or tag id 'virtual-ip' not found"
+          err: "Error: Unable to find resource: 'virtual-ip'"
   - id: test_absent_minimal_input_resource_exists
     input:
       state: absent
@@ -649,4 +634,44 @@ test_cases:
           environ: *env-def
           rc: 0
           out: "  * Clone Set: virtual-ip-clone [virtual-ip]\t(ocf:heartbeat:IPAddr2):\t Started"
+          err: ""
+  - id: test_clone_resource_already_cloned
+    input:
+      state: cloned
+      name: virtual-ip
+    output:
+      changed: false
+      previous_value: "  * Clone Set: virtual-ip-clone [virtual-ip]\t(ocf:heartbeat:IPAddr2):\t Started"
+      value: "  * Clone Set: virtual-ip-clone [virtual-ip]\t(ocf:heartbeat:IPAddr2):\t Started"
+    mocks:
+      run_command:
+        - command: [/testbin/pcs, resource, status, virtual-ip]
+          environ: *env-def
+          rc: 0
+          out: "  * Clone Set: virtual-ip-clone [virtual-ip]\t(ocf:heartbeat:IPAddr2):\t Started"
+          err: ""
+        - command: [/testbin/pcs, resource, status, virtual-ip]
+          environ: *env-def
+          rc: 0
+          out: "  * Clone Set: virtual-ip-clone [virtual-ip]\t(ocf:heartbeat:IPAddr2):\t Started"
+          err: ""
+  - id: test_clone_group_already_cloned
+    input:
+      state: cloned
+      name: locking
+    output:
+      changed: false
+      previous_value: "  * Clone Set: locking-clone [locking]:\n    * Started: [ md-nds-smb01 md-nds-smb02 md-nds-smb03 ]"
+      value: "  * Clone Set: locking-clone [locking]:\n    * Started: [ md-nds-smb01 md-nds-smb02 md-nds-smb03 ]"
+    mocks:
+      run_command:
+        - command: [/testbin/pcs, resource, status, locking]
+          environ: *env-def
+          rc: 0
+          out: "  * Clone Set: locking-clone [locking]:\n    * Started: [ md-nds-smb01 md-nds-smb02 md-nds-smb03 ]"
+          err: ""
+        - command: [/testbin/pcs, resource, status, locking]
+          environ: *env-def
+          rc: 0
+          out: "  * Clone Set: locking-clone [locking]:\n    * Started: [ md-nds-smb01 md-nds-smb02 md-nds-smb03 ]"
           err: ""

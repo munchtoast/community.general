@@ -63,6 +63,15 @@ def get_pacemaker_maintenance_mode(runner: CmdRunner) -> bool:
         return bool(maintenance_mode_output)
 
 
+_CLONE_SET_MEMBER_RE = re.compile(r"Clone Set:\s+\S+\s+\[(?P<member>[^\]]+)\]")
+
+
+def resource_status_shows_clone_member(status_output: str, name: str) -> bool:
+    if not status_output or not name:
+        return False
+    return any(match.group("member") == name for match in _CLONE_SET_MEMBER_RE.finditer(status_output))
+
+
 _DEFAULT_RESOURCE_READY_STATES = ("Started",)
 
 
